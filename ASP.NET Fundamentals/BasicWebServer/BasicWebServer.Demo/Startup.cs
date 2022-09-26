@@ -3,6 +3,8 @@ using BasicWebServer.Server.HTTP;
 using BasicWebServer.Server.Responses;
 using System.Net.WebSockets;
 using System.Runtime.CompilerServices;
+using System.Text;
+using System.Web;
 
 const string HtmlForm = @"
 <div><h1>Input form</h1></div>
@@ -26,7 +28,9 @@ var server = new HttpServer(routes => routes
     .MapGet("/content", new HtmlResponse(DownloadForm))
     .MapPost("/content", new TextFileResponse("content.txt"))
     .MapGet("/html", new HtmlResponse(HtmlForm))
-    .MapPost("/html", new TextResponse("", AddFormDataAction)));
+    .MapPost("/html", new TextResponse("", AddFormDataAction))
+    .MapGet("/cookies", new HtmlResponse("", AddCookiesAction))
+    );
 await server.Start();
 
 static void AddFormDataAction(Request request, Response response)
@@ -64,4 +68,41 @@ static async Task DownloadSitesAsTextFile(string fileName, string[] urls)
         responses);
 
     await File.WriteAllTextAsync(fileName, responsesString);
+}
+
+static void AddCookiesAction(Request request, Response response)
+{
+    bool requestHasCookies = request.Cookies.Any();
+    string bodyText = string.Empty;
+
+    if (requestHasCookies)
+    {
+        var cookieText = new StringBuilder();
+        cookieText.Append("<h1>Cookies</h1>");
+        cookieText.Append("<table border='1'><tr><th>Name</th><th>Value</th></tr>");
+
+        foreach (var cookie in request.Cookies)
+        {
+            cookieText.Append("<tr>");
+            cookieText.Append($"<td>{HttpUtility.HtmlEncode(cookie.Name)}</td>");
+            cookieText.Append($"<td>{HttpUtility.HtmlEncode(cookie.Value)}</td>");
+            cookieText.Append("</tr>");
+        }
+
+        cookieText.Append("</table>");
+        bodyText = cookieText.ToString();
+    }
+    else
+    {
+        bodyText = "<h1>Cookies set!</h1>";
+    }
+
+    response.Body = bodyText;
+
+    if (!requestHasCookies)
+    {
+        response.Cookies.Add("My-Cookie", "My-Value");
+        response.Cookies.Add("My-Second-Cookie", "My-Second-Value");
+
+    }
 }

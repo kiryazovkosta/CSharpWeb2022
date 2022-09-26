@@ -12,8 +12,12 @@ namespace BasicWebServer.Server.HTTP
         public Method Method { get; private set; }
         public string Url { get; private set; } = null!;
         public HeaderCollection Headers { get; private set; } = null!;
+        public CookieCollection Cookies { get; private set; } = null!;
         public string Body { get; private set; } = null!;
+        public Session Session { get; private set; } = null!;
         public IReadOnlyDictionary<string, string> Form { get; private set; } = null!;
+
+        private static Dictionary<string, Session> Sessions = new();
 
         public static Request Parse(string request)
         {
@@ -24,6 +28,9 @@ namespace BasicWebServer.Server.HTTP
             var url = startLine[1];
 
             var headers = ParseHeaders(lines.Skip(1));
+            var cookies = ParseCookies(headers);
+            var session = GetSession(cookies);
+
             var bodyLines = lines.Skip(headers.Count+ 2).ToArray();
             var body = string.Join("\r\n", bodyLines);
             var form = ParseForm(headers, body);
@@ -33,7 +40,9 @@ namespace BasicWebServer.Server.HTTP
                 Method = method,
                 Url = url,
                 Headers = headers,
+                Cookies = cookies,
                 Body = body,
+                Session = session,
                 Form = form
             };
         }
@@ -73,6 +82,25 @@ namespace BasicWebServer.Server.HTTP
             }
 
             return headerCollection;
+        }
+
+        private static CookieCollection ParseCookies(HeaderCollection headers)
+        {
+            var cookieCollection = new CookieCollection();
+            if (headers.Contains(Header.Cookie))
+            {
+                var cookieHeader = headers[Header.Cookie];
+                string[] allCookies = cookieHeader.Split(";");
+                foreach (var cookieText in allCookies)
+                {
+                    string[] cookieParts = cookieText.Split("=");
+                    string cookieName = cookieParts[0].Trim();
+                    string cookieValue = cookieParts[1].Trim();
+                    cookieCollection.Add(cookieName, cookieValue);
+                }
+            }
+
+            return cookieCollection;
         }
 
         private static Dictionary<string, string> ParseForm(HeaderCollection headers, string body)
