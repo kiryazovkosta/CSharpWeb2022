@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Filters;
 using Watchlist.Models;
 using Watchlist.ViewModels;
 
@@ -81,16 +80,6 @@ namespace Watchlist.Controllers
         {
             await signInManager.SignOutAsync();
             return RedirectToAction("Index", "Home");
-        }
-
-        public override void OnActionExecuting(ActionExecutingContext context)
-        {
-            if (context.ActionDescriptor.DisplayName != "Logout" && User.Identity.IsAuthenticated)
-            {
-                context.Result = new RedirectToRouteResult(new RouteValueDictionary(new { controller = "All", action = "Index" }));    
-            }
-
-            base.OnActionExecuting(context);
         }
     }
 }
