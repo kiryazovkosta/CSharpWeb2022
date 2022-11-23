@@ -51,5 +51,33 @@
         <span class="carousel-control-next-icon" aria-hidden="true"></span>
         <span class="visually-hidden">Next</span>
     </button>
+
+    <div class="mb-5"></div>
+
+    <div class="row">
+        <div class="col-12 text-center">
+            <button class="btn btn-primary" id="statistics-button">Show Staistics</button>
+        </div>
+
+        <div class="mt-4 p-4 bg-light d-none" id="statistics">
+            <div class="row">
+                <h2 class="col-md-6 text-center" is="total-houses"></h2>
+                <h2 class="col-md-6 text-center" is="total-rents"></h2>
+            </div>
+        </div>
+    </div>
 </div>
+
+@section Scripts {
+    <script>
+        $('#statistics-button').on('click', ev => {
+            $.get('/api/statistics', (data) => {
+                $('#total-houses').text(data.TotalHouses + "Houses");
+                $('#total-rents').text(data.TotalRents + "Rents");
+                $('#statistics').removeClass('d-none');
+                $('#statistics-button').hide();
+            })
+        });
+    </script>
+}
 
